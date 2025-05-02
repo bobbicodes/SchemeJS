@@ -1484,10 +1484,7 @@ export function createInstance(schemeOpts = {}) {
     }
     tools.indent = saveIndent;
     emit(`}`);
-    if (ssaScope.dynamicScopeUsed)
-      saveSsaScope.dynamicScopeUsed = true;
-    else
-      tools.deleteEmitted(scopeLines);
+    saveSsaScope.dynamicScopeUsed = true;
     return ssaResult;
   }
 
@@ -3088,12 +3085,12 @@ export function createInstance(schemeOpts = {}) {
     let binder = new Function("bound", "resolveUnbound", "invokeUnbound", code);
     let compiledFunction = binder.call(this, bindSymToObj, resolveUnbound, invokeUnbound);
     return compiledFunction;
-    function resolveUnbound(symbol) {
+    function resolveUnbound(symbol, scope) {
       let val = scope[symbol];
       if (val === undefined) return checkUndefinedInScope(symbol, scope);
       return val;
     }
-    function invokeUnbound(fn, args) {
+    function invokeUnbound(fn, args, scope) {
       let list = new Pair(fn, args);
       return _eval(list, scope);
     }
@@ -3284,7 +3281,7 @@ export function createInstance(schemeOpts = {}) {
           return ssaValue;
         }
         tools.dynamicScopeUsed = true;
-        return `resolveUnbound(${use(bind(sym))})`;
+        return `resolveUnbound(${use(bind(sym))}, scope)`;
       }
       if (TRACE_COMPILER)  // too noisy and not very informative to trace the above
         console.log("COMPILE EVAL", string(form));
@@ -3331,7 +3328,7 @@ export function createInstance(schemeOpts = {}) {
           let fName = typeof fn === 'symbol' ? fn.description : 'unbound';
           let ssaResult = newTemp(`${fName}_result`);
           let ssaArgList = use(bind(args));
-          emit(`let ${ssaResult} = invokeUnbound(${ssaFunction}, ${ssaArgList});`);
+          emit(`let ${ssaResult} = invokeUnbound(${ssaFunction}, ${ssaArgList}, scope);`);
           return ssaResult;
         }
         let requiredCount = functionDescriptor.requiredCount;
