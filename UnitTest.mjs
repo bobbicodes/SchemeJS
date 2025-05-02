@@ -724,6 +724,16 @@ function runTestsInNewInstance(opts = {}) {
       endTestScope(savedScope);
     }
 
+    { // Test dynamic let bindings
+      let savedScope = beginTestScope();
+      EXPECT(` (defn [f1 x] x) `, ` 'f1 `);
+      EXPECT(` (defn [f2 y] y) `, ` 'f2 `);
+      EXPECT(` (def functions [f1]) `, ` 'functions `)
+      EXPECT(` (compile [f3]  (let ((z 1)) ((nth 0 functions) (f2 z)))) `, ` 'f3 `);
+      EXPECT(` (f3) `, ` 1 `)
+      endTestScope(savedScope);
+    }
+
     { // Test that spread works OK with a macro that specializes for the compiled case.
       let savedScope = beginTestScope();
 
